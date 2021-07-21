@@ -1,13 +1,36 @@
 import { GraphQLServer } from "graphql-yoga";
 
-// Type definitions (schema)
+// 더미 데이터
+const users = [
+  { id: "1", name: "woobuntu", email: "이메일" },
+  {
+    id: "2",
+    name: "name",
+    email: "email",
+  },
+];
+const posts = [
+  {
+    id: "1",
+    title: "title",
+    body: "body",
+    published: false,
+  },
+  {
+    id: "2",
+    title: "제목",
+    body: "내용",
+    published: false,
+  },
+];
 
+// Type definitions (schema)
 const typeDefs = `
     type Query {
-      greeting(name: String, position:String): String!
       me: User!
+      users(query: String): [User!]!
       post: Post!
-      add(a: Float!, b: Float!): Float!
+      posts(query: String): [Post!]!
     }
 
     type User {
@@ -28,12 +51,6 @@ const typeDefs = `
 // Resolvers
 const resolvers = {
   Query: {
-    greeting(parent, args, ctx, info) {
-      const { name, position } = args;
-      return `Hello${
-        name && position ? `, ${name} You are my favorite ${position}` : ""
-      }!`;
-    },
     me() {
       return {
         id: "1",
@@ -42,7 +59,15 @@ const resolvers = {
         age: 30,
       };
     },
-    post() {
+    users(parent, args, ctx, info) {
+      const { query } = args;
+      return query
+        ? users.filter(({ name }) =>
+            name.toLowerCase().includes(query.toLowerCase())
+          )
+        : users;
+    },
+    post(parent, args, ctx, info) {
       return {
         id: "1",
         title: "GraphQL",
@@ -50,8 +75,18 @@ const resolvers = {
         published: false,
       };
     },
-    add(_, { a, b }) {
-      return a + b;
+    posts(parent, { query }, ctx, info) {
+      return query
+        ? posts.filter(({ title, body }) => {
+            const loweredQuery = query.toLowerCase();
+            const isMatchedWithEachOther = (column, value) =>
+              column.toLowerCase().includes(value);
+            return (
+              isMatchedWithEachOther(title, loweredQuery) ||
+              isMatchedWithEachOther(body, loweredQuery)
+            );
+          })
+        : posts;
     },
   },
 };
