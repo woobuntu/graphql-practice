@@ -4,32 +4,27 @@ import { GraphQLServer } from "graphql-yoga";
 
 const typeDefs = `
     type Query {
-        id: ID!
-        name: String!
-        age: Int!
-        employed: Boolean!
-        gpa: Float
+      me: User!
+    }
+
+    type User {
+      id: ID!
+      name: String!
+      email: String!
+      age: Int 
     }
 `;
 
 // Resolvers
 const resolvers = {
   Query: {
-    id() {
-      return "abc123";
-    },
-    name() {
-      return "이인우";
-    },
-    age() {
-      return 30;
-    },
-    employed() {
-      return true;
-    },
-    gpa() {
-      // return null
-      return 3.53;
+    me() {
+      return {
+        id: "1",
+        name: "이인우",
+        email: "woobuntu@mail.mail",
+        age: 30,
+      };
     },
   },
 };
