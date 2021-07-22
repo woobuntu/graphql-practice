@@ -15,12 +15,14 @@ const posts = [
     title: "title",
     body: "body",
     published: false,
+    author: "1",
   },
   {
     id: "2",
     title: "제목",
     body: "내용",
     published: false,
+    author: "2",
   },
 ];
 
@@ -45,6 +47,7 @@ const typeDefs = `
       title: String!
       body: String!
       published: Boolean!
+      author: User!
     }
 `;
 
@@ -87,6 +90,11 @@ const resolvers = {
             );
           })
         : posts;
+    },
+  },
+  Post: {
+    author(parent, args, ctx, info) {
+      return users.find(({ id }) => id == parent.author);
     },
   },
 };
