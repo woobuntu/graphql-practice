@@ -26,6 +26,13 @@ const posts = [
   },
 ];
 
+const comments = [
+  { id: "1", text: "댓글1", author: "1", post: "1" },
+  { id: "2", text: "댓글2", author: "1", post: "2" },
+  { id: "3", text: "댓글3", author: "2", post: "1" },
+  { id: "4", text: "댓글4", author: "2", post: "2" },
+];
+
 // Type definitions (schema)
 const typeDefs = `
     type Query {
@@ -33,6 +40,7 @@ const typeDefs = `
       users(query: String): [User!]!
       post: Post!
       posts(query: String): [Post!]!
+      comments(query: String): [Comment!]!
     }
 
     type User {
@@ -41,6 +49,7 @@ const typeDefs = `
       email: String!
       age: Int 
       posts(query: String): [Post!]!
+      comments(query: String): [Comment!]!
     }
 
     type Post {
@@ -49,6 +58,14 @@ const typeDefs = `
       body: String!
       published: Boolean!
       author: User!
+      comments(query: String): [Comment!]!
+    }
+
+    type Comment {
+      id: ID!
+      text: String!
+      author: User!
+      post: Post!
     }
 `;
 
@@ -92,15 +109,38 @@ const resolvers = {
           })
         : posts;
     },
+    comments(parent, args, ctx, info) {
+      const { query } = args;
+      return query
+        ? comments.filter(({ text }) => {
+            const loweredQuery = query.toLowerCase();
+            return text.toLowerCase().includes(loweredQuery);
+          })
+        : comments;
+    },
   },
   Post: {
     author(parent, args, ctx, info) {
       return users.find(({ id }) => id == parent.author);
     },
+    comments(parent, args, ctx, info) {
+      return comments.filter(({ post }) => post == parent.id);
+    },
   },
   User: {
     posts(parent, args, ctx, info) {
       return posts.filter(({ author }) => author == parent.id);
+    },
+    comments(parent, args, ctx, info) {
+      return comments.filter(({ author }) => author == parent.id);
+    },
+  },
+  Comment: {
+    author(parent, args, ctx, info) {
+      return users.find(({ id }) => id == parent.author);
+    },
+    post(parent, args, ctx, info) {
+      return posts.find(({ id }) => id == parent.post);
     },
   },
 };
