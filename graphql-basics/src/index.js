@@ -1,4 +1,5 @@
 import { GraphQLServer } from "graphql-yoga";
+import { v4 } from "uuid";
 
 // 더미 데이터
 const users = [
@@ -14,7 +15,7 @@ const posts = [
     id: "1",
     title: "title",
     body: "body",
-    published: false,
+    published: true,
     author: "1",
   },
   {
@@ -41,6 +42,12 @@ const typeDefs = `
       post: Post!
       posts(query: String): [Post!]!
       comments(query: String): [Comment!]!
+    }
+
+    type Mutation {
+      createUser(name: String!, email: String!, age: Int): User!
+      createPost(title: String!,body: String! ,published: Boolean!, author: ID!): Post!
+      createComment(text: String!, author: ID!, post: ID!): Comment!
     }
 
     type User {
@@ -117,6 +124,64 @@ const resolvers = {
             return text.toLowerCase().includes(loweredQuery);
           })
         : comments;
+    },
+  },
+  Mutation: {
+    createUser(parent, args, ctx, info) {
+      const emailTaken = users.some(({ email }) => email == args.email);
+
+      if (emailTaken) throw new Error("Email taken.");
+
+      const newUser = {
+        id: v4(),
+        name: args.name,
+        email: args.email,
+        age: args.age,
+      };
+
+      users.push(newUser);
+
+      return newUser;
+    },
+    createPost(parent, args, ctx, info) {
+      const userExists = users.some(({ id }) => id == args.author);
+
+      if (!userExists) throw new Error("존재하지 않는 사용자입니다.");
+
+      const newPost = {
+        id: v4(),
+        title: args.title,
+        body: args.body,
+        published: args.published,
+        author: args.author,
+      };
+
+      posts.push(newPost);
+
+      return newPost;
+    },
+    createComment(parent, args, ctx, info) {
+      const userExists = users.some(({ id }) => id == args.author);
+
+      if (!userExists) throw new Error("존재하지 않는 사용자입니다.");
+
+      const postExistsAndPublished = posts.some(
+        ({ id, published }) => id == args.post && published
+      );
+
+      if (!postExistsAndPublished)
+        throw new Error("post가 존재하지 않거나 게시되지 않은 post입니다.");
+
+      const newComment = {
+        id: v4(),
+        text: args.text,
+        author: args.author,
+        post: args.post,
+      };
+
+      comments.push(newComment);
+
+      return newComment;
     },
   },
   Post: {
