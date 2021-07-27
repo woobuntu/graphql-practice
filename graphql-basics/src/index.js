@@ -134,9 +134,7 @@ const resolvers = {
 
       const newUser = {
         id: v4(),
-        name: args.name,
-        email: args.email,
-        age: args.age,
+        ...args,
       };
 
       users.push(newUser);
@@ -150,10 +148,7 @@ const resolvers = {
 
       const newPost = {
         id: v4(),
-        title: args.title,
-        body: args.body,
-        published: args.published,
-        author: args.author,
+        ...args,
       };
 
       posts.push(newPost);
@@ -174,9 +169,7 @@ const resolvers = {
 
       const newComment = {
         id: v4(),
-        text: args.text,
-        author: args.author,
-        post: args.post,
+        ...args,
       };
 
       comments.push(newComment);
