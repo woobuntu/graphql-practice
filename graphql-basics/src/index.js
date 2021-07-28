@@ -45,9 +45,28 @@ const typeDefs = `
     }
 
     type Mutation {
-      createUser(name: String!, email: String!, age: Int): User!
-      createPost(title: String!,body: String! ,published: Boolean!, author: ID!): Post!
-      createComment(text: String!, author: ID!, post: ID!): Comment!
+      createUser(user: CreateUserInput!): User!
+      createPost(post: CreatePostInput!): Post!
+      createComment(comment: CreateCommentInput!): Comment!
+    }
+
+    input CreateUserInput {
+      name: String!
+      email: String!
+      age: Int
+    }
+    
+    input CreatePostInput {
+      title: String!
+      body: String!
+      published: Boolean!
+      author: ID!
+    }
+
+    input CreateCommentInput {
+      text: String!
+      author: ID!
+      post: ID!
     }
 
     type User {
@@ -127,41 +146,41 @@ const resolvers = {
     },
   },
   Mutation: {
-    createUser(parent, args, ctx, info) {
-      const emailTaken = users.some(({ email }) => email == args.email);
+    createUser(parent, { user }, ctx, info) {
+      const emailTaken = users.some(({ email }) => email == user.email);
 
       if (emailTaken) throw new Error("Email taken.");
 
       const newUser = {
         id: v4(),
-        ...args,
+        ...user,
       };
 
       users.push(newUser);
 
       return newUser;
     },
-    createPost(parent, args, ctx, info) {
-      const userExists = users.some(({ id }) => id == args.author);
+    createPost(parent, { post }, ctx, info) {
+      const userExists = users.some(({ id }) => id == post.author);
 
       if (!userExists) throw new Error("존재하지 않는 사용자입니다.");
 
       const newPost = {
         id: v4(),
-        ...args,
+        ...post,
       };
 
       posts.push(newPost);
 
       return newPost;
     },
-    createComment(parent, args, ctx, info) {
-      const userExists = users.some(({ id }) => id == args.author);
+    createComment(parent, { comment }, ctx, info) {
+      const userExists = users.some(({ id }) => id == comment.author);
 
       if (!userExists) throw new Error("존재하지 않는 사용자입니다.");
 
       const postExistsAndPublished = posts.some(
-        ({ id, published }) => id == args.post && published
+        ({ id, published }) => id == comment.post && published
       );
 
       if (!postExistsAndPublished)
@@ -169,7 +188,7 @@ const resolvers = {
 
       const newComment = {
         id: v4(),
-        ...args,
+        ...comment,
       };
 
       comments.push(newComment);
