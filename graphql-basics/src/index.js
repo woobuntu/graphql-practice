@@ -2,7 +2,7 @@ import { GraphQLServer } from "graphql-yoga";
 import { v4 } from "uuid";
 
 // 더미 데이터
-const users = [
+let users = [
   { id: "1", name: "woobuntu", email: "이메일" },
   {
     id: "2",
@@ -10,7 +10,7 @@ const users = [
     email: "email",
   },
 ];
-const posts = [
+let posts = [
   {
     id: "1",
     title: "title",
@@ -27,7 +27,7 @@ const posts = [
   },
 ];
 
-const comments = [
+let comments = [
   { id: "1", text: "댓글1", author: "1", post: "1" },
   { id: "2", text: "댓글2", author: "1", post: "2" },
   { id: "3", text: "댓글3", author: "2", post: "1" },
@@ -46,8 +46,11 @@ const typeDefs = `
 
     type Mutation {
       createUser(user: CreateUserInput!): User!
+      deleteUser(id: ID!): User!
       createPost(post: CreatePostInput!): Post!
+      deletePost(id: ID!): Post!
       createComment(comment: CreateCommentInput!): Comment!
+      deleteComment(id: ID!): Comment!
     }
 
     input CreateUserInput {
@@ -160,6 +163,26 @@ const resolvers = {
 
       return newUser;
     },
+    deleteUser(parent, args, ctx, info) {
+      const userIndex = users.findIndex(({ id }) => id === args.id);
+
+      if (userIndex == -1)
+        throw new Error(`${args.id}의 사용자는 존재하지 않습니다.`);
+
+      const deletedUser = users[userIndex];
+
+      users = users.filter(({ id }) => id !== args.id);
+      posts = posts.filter(({ id, author }) => {
+        const match = author == args.id;
+
+        if (match) comments = comments.filter(({ post }) => post !== id);
+
+        return !match;
+      });
+      comments = comments.filter(({ author }) => author !== args.id);
+
+      return deletedUser;
+    },
     createPost(parent, { post }, ctx, info) {
       const userExists = users.some(({ id }) => id == post.author);
 
@@ -173,6 +196,19 @@ const resolvers = {
       posts.push(newPost);
 
       return newPost;
+    },
+    deletePost(parent, args, ctx, info) {
+      // post 있는지 확인
+      const indexOfPostToBeDeleted = posts.findIndex(({ id }) => id == args.id);
+      // 없으면 에러 반환
+      if (indexOfPostToBeDeleted == -1)
+        throw new Error(`id ${args.id}의 post가 존재하지 않습니다.`);
+      // 있으면 관련 커멘트 지우기
+      comments = comments.filter(({ post }) => post !== args.id);
+      // post 지우기
+      const [deletedPost] = posts.splice(indexOfPostToBeDeleted, 1);
+
+      return deletedPost;
     },
     createComment(parent, { comment }, ctx, info) {
       const userExists = users.some(({ id }) => id == comment.author);
@@ -194,6 +230,18 @@ const resolvers = {
       comments.push(newComment);
 
       return newComment;
+    },
+    deleteComment(parent, args, ctx, info) {
+      const indexOfCommentToBeDeleted = comments.findIndex(
+        ({ id }) => id == args.id
+      );
+
+      if (indexOfCommentToBeDeleted == -1)
+        throw new Error(`id ${args.id}인 comment는 존재하지 않습니다.`);
+
+      const [deletedComment] = comments.splice(indexOfCommentToBeDeleted, 1);
+
+      return deletedComment;
     },
   },
   Post: {
