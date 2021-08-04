@@ -35,6 +35,29 @@ const Mutation = {
 
     return deletedUser;
   },
+  updateUser(
+    parent,
+    { id: idOfUserToBeUpdated, data },
+    { db: { users } },
+    info
+  ) {
+    const userToBeUpdated = users.find(({ id }) => id === idOfUserToBeUpdated);
+
+    if (!userToBeUpdated)
+      throw new Error(`${idOfUserToBeUpdated}의 사용자는 존재하지 않습니다.`);
+
+    if (typeof data.email === "string") {
+      if (users.some(({ email }) => email === data.email))
+        throw new Error(`${data.email}은 이미 존재하는 이메일입니다.`);
+      else userToBeUpdated.email = data.email;
+    }
+
+    if (typeof data.name === "string") userToBeUpdated.name = data.name;
+
+    if (typeof data.name !== "undefined") userToBeUpdated.age = data.age;
+
+    return userToBeUpdated;
+  },
   createPost(parent, { post }, { db: { users, posts } }, info) {
     const userExists = users.some(({ id }) => id == post.author);
 
@@ -61,6 +84,29 @@ const Mutation = {
     const [deletedPost] = posts.splice(indexOfPostToBeDeleted, 1);
 
     return deletedPost;
+  },
+  updatePost(
+    parent,
+    { id: idOfPostToBeUpdated, data },
+    { db: { posts } },
+    info
+  ) {
+    const { title, body, published } = data;
+
+    const postToBeUpdated = posts.find(({ id }) => id == idOfPostToBeUpdated);
+
+    if (!postToBeUpdated)
+      throw new Error(
+        `id가 ${idOfPostToBeUpdated}인 post는 존재하지 않습니다.`
+      );
+
+    if (typeof title == "string") postToBeUpdated.title = title;
+
+    if (typeof body == "string") postToBeUpdated.body = body;
+
+    if (typeof published == "boolean") postToBeUpdated.published = published;
+
+    return postToBeUpdated;
   },
   createComment(parent, { comment }, { db: { users, posts, comments } }, info) {
     const userExists = users.some(({ id }) => id == comment.author);
@@ -94,6 +140,25 @@ const Mutation = {
     const [deletedComment] = comments.splice(indexOfCommentToBeDeleted, 1);
 
     return deletedComment;
+  },
+  updateComment(
+    parent,
+    { id: idOfCommentToBeUpdated, data: { text } },
+    { db: { comments } },
+    info
+  ) {
+    const commentToBeUpdated = comments.find(
+      ({ id }) => id == idOfCommentToBeUpdated
+    );
+
+    if (!commentToBeUpdated)
+      throw new Error(
+        `id가 ${idOfCommentToBeUpdated}인 comment가 존재하지 않습니다.`
+      );
+
+    if (typeof text == "string") commentToBeUpdated.text = text;
+
+    return commentToBeUpdated;
   },
 };
 
