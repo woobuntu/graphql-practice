@@ -3,7 +3,7 @@ import { v4 } from "uuid";
 const createComment = (
   parent,
   { comment },
-  { db: { users, posts, comments } },
+  { db: { users, posts, comments }, pubsub },
   info
 ) => {
   const userExists = users.some(({ id }) => id == comment.author);
@@ -23,6 +23,12 @@ const createComment = (
   };
 
   comments.push(newComment);
+
+  const commentsInPost = comments.filter(({ post }) => post == comment.post);
+
+  pubsub.publish(`comments in post ${comment.post}`, {
+    comment: commentsInPost,
+  });
 
   return newComment;
 };

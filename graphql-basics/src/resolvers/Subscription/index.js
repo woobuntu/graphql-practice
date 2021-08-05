@@ -1,16 +1,9 @@
+import comments from "./comments";
+import posts from "./posts";
+
 const Subscription = {
-  count: {
-    subscribe(parent, args, { pubsub }, info) {
-      let count = 0;
-
-      setInterval(() => {
-        count++;
-        pubsub.publish("count", { count });
-      }, 1000);
-
-      return pubsub.asyncIterator("count"); //channel name
-    },
-  },
+  comments,
+  posts,
 };
 
 export default Subscription;

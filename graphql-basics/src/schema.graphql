@@ -19,8 +19,12 @@ type Mutation {
 }
 
 type Subscription {
-  count: Int!
+  comments(postId: ID!): [Comment!]!
+  posts: [Post!]!
 }
+# 이렇게 배열로 받지 않고 개별 데이터와 데이터 메소드(CRUD)를 명시해서 최적화하는 방법도 있겠지만,
+# 어차피 리액트에서는 key(id)로 비교하니 이렇게 배열로 받았다.
+# comment도 post도 update로 바뀌는 속성은 얕은 속성이니 리액트의 얕은 비교로 update를 걸러낼 수 있을 것
 
 input CreateUserInput {
   name: String!
@@ -81,3 +85,14 @@ type Comment {
   author: User!
   post: Post!
 }
+
+# graphql에서도 enum을 정의할 수 있다.
+# 어차피 타입스크립트를 쓰면 resolver에서 타입 정의를 하긴 하겠지만,
+# client에서 type을 미리 확인할 수 있으니 좋은 것 같다.
+# 다만 문자열밖에 지정할 수 없는 듯하다
+# enum ZeroOneTwoThree {
+#   zero
+#   one
+#   two
+#   three
+# }

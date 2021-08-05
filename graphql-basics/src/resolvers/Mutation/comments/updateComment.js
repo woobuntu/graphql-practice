@@ -1,7 +1,7 @@
 const updateComment = (
   parent,
   { id: idOfCommentToBeUpdated, data: { text } },
-  { db: { comments } },
+  { db: { comments }, pubsub },
   info
 ) => {
   const commentToBeUpdated = comments.find(
@@ -14,6 +14,14 @@ const updateComment = (
     );
 
   if (typeof text == "string") commentToBeUpdated.text = text;
+
+  const commentsInPost = comments.filter(
+    ({ post }) => post == commentToBeUpdated.post
+  );
+
+  pubsub.publish(`comments in post ${commentToBeUpdated.post}`, {
+    comments: commentsInPost,
+  });
 
   return commentToBeUpdated;
 };

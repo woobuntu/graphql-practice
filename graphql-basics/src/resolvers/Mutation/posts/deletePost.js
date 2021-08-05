@@ -1,4 +1,9 @@
-const deletePost = (parent, args, { db: { posts, comments } }, info) => {
+const deletePost = (
+  parent,
+  args,
+  { db: { posts, comments }, pubsub },
+  info
+) => {
   // post 있는지 확인
   const indexOfPostToBeDeleted = posts.findIndex(({ id }) => id == args.id);
   // 없으면 에러 반환
@@ -8,6 +13,9 @@ const deletePost = (parent, args, { db: { posts, comments } }, info) => {
   comments = comments.filter(({ post }) => post !== args.id);
   // post 지우기
   const [deletedPost] = posts.splice(indexOfPostToBeDeleted, 1);
+
+  // 게시되지 않은 post의 삭제까지 publish할 필요는 없음
+  deletePost.published && pubsub.publish("posts", { posts });
 
   return deletedPost;
 };
