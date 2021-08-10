@@ -1,0 +1,32 @@
+USE graphql_practice;
+DROP TABLE IF EXISTS User;
+CREATE TABLE User(
+  id INT AUTO_INCREMENT,
+  name VARCHAR(20) NOT NULL,
+  email VARCHAR(100) NOT NULL,
+  age INT NOT NULL,
+  PRIMARY KEY(id)
+);
+DESC User;
+DROP TABLE IF EXISTS Post;
+CREATE TABLE Post(
+  id INT AUTO_INCREMENT,
+  title VARCHAR(100) NOT NULL,
+  body TEXT NOT NULL,
+  published BOOLEAN NOT NULL,
+  author_id INT NOT NULL,
+  PRIMARY KEY(id),
+  FOREIGN KEY(author_id) REFERENCES User(id)
+);
+DESC Post;
+DROP TABLE IF EXISTS Comment;
+CREATE TABLE Comment(
+  id INT AUTO_INCREMENT,
+  text VARCHAR(255) NOT NULL,
+  author_id INT NOT NULL,
+  post_id INT NOT NULL,
+  PRIMARY KEY(id),
+  FOREIGN KEY(author_id) REFERENCES User(id),
+  FOREIGN KEY(post_id) REFERENCES Post(id)
+);
+DESC Comment;
