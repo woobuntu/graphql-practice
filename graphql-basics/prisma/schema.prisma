@@ -12,8 +12,8 @@ model User {
   name    String    @db.VarChar(20)
   email   String    @db.VarChar(100)
   age     Int
-  Comment Comment[]
-  Post    Post[]
+  comments Comment[]
+  posts    Post[]
 }
 
 model Post {
@@ -21,21 +21,21 @@ model Post {
   title     String    @db.VarChar(100)
   body      String    @db.Text
   published Boolean
-  author_id Int
-  User      User      @relation(fields: [author_id], references: [id])
-  Comment   Comment[]
+  authorId Int @map("author_id")
+  author      User      @relation(fields: [authorId], references: [id])
+  comments   Comment[]
 
-  @@index([author_id], name: "author_id")
+  @@index([authorId], name: "authorId")
 }
 
 model Comment {
   id        Int    @id @default(autoincrement())
   text      String @db.VarChar(255)
-  author_id Int
-  post_id   Int
-  User      User   @relation(fields: [author_id], references: [id])
-  Post      Post   @relation(fields: [post_id], references: [id])
+  authorId Int @map("author_id")
+  postId   Int @map("post_id")
+  author      User   @relation(fields: [authorId], references: [id])
+  post      Post   @relation(fields: [postId], references: [id])
 
-  @@index([author_id], name: "author_id")
-  @@index([post_id], name: "post_id")
+  @@index([authorId], name: "authorId")
+  @@index([postId], name: "postId")
 }
