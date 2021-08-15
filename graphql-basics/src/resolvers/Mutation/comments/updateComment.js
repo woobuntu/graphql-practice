@@ -1,29 +1,47 @@
-const updateComment = (
+import prisma from "../../../prisma";
+
+const main = async (
   parent,
   { id: idOfCommentToBeUpdated, data: { text } },
-  { db: { comments }, pubsub },
+  { pubsub },
   info
 ) => {
-  const commentToBeUpdated = comments.find(
-    ({ id }) => id == idOfCommentToBeUpdated
-  );
+  try {
+    const commentToBeUpdated = prisma.comment.findUnique({
+      where: {
+        id: idOfCommentToBeUpdated,
+      },
+    });
 
-  if (!commentToBeUpdated)
-    throw new Error(
-      `id가 ${idOfCommentToBeUpdated}인 comment가 존재하지 않습니다.`
-    );
+    if (!commentToBeUpdated)
+      throw new Error(
+        `id가 ${idOfCommentToBeUpdated}인 comment가 존재하지 않습니다.`
+      );
 
-  if (typeof text == "string") commentToBeUpdated.text = text;
+    const dataToBeUpdated = {};
+    if (typeof text == "string") dataToBeUpdated.text = text;
 
-  const commentsInPost = comments.filter(
-    ({ post }) => post == commentToBeUpdated.post
-  );
+    const updatedComment = await prisma.comment.update({
+      where: {
+        id: idOfCommentToBeUpdated,
+      },
+      data: dataToBeUpdated,
+    });
 
-  pubsub.publish(`comments in post ${commentToBeUpdated.post}`, {
-    comments: commentsInPost,
-  });
+    const commentsInPost = await prisma.comment.findMany({
+      where: {
+        postId: updatedComment.postId,
+      },
+    });
 
-  return commentToBeUpdated;
+    pubsub.publish(`comments in post ${updatedComment.postId}`, {
+      comments: commentsInPost,
+    });
+
+    return updatedComment;
+  } catch (error) {
+    throw error;
+  }
 };
 
-export default updateComment;
+export default main;

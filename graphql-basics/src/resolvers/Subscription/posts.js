@@ -1,5 +1,5 @@
 const posts = {
-  subscribe(parent, args, { db: { posts }, pubsub }, info) {
+  subscribe(parent, args, { pubsub }, info) {
     return pubsub.asyncIterator("posts");
   },
 };

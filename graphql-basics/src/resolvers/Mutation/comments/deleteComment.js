@@ -1,22 +1,36 @@
-const deleteComment = (parent, args, { db: { comments }, pubsub }, info) => {
-  const indexOfCommentToBeDeleted = comments.findIndex(
-    ({ id }) => id == args.id
-  );
+import prisma from "../../../prisma";
 
-  if (indexOfCommentToBeDeleted == -1)
-    throw new Error(`id ${args.id}인 comment는 존재하지 않습니다.`);
+const main = async (parent, args, { pubsub }, info) => {
+  try {
+    const commentToBeDeleted = await prisma.comment.findUnique({
+      where: {
+        id: args.id,
+      },
+    });
 
-  const [deletedComment] = comments.splice(indexOfCommentToBeDeleted, 1);
+    if (!commentToBeDeleted)
+      throw new Error(`id ${args.id}인 comment는 존재하지 않습니다.`);
 
-  const commentsInPost = comments.filter(
-    ({ post }) => post == deletedComment.post
-  );
+    const deletedComment = await prisma.comment.delete({
+      where: {
+        id: args.id,
+      },
+    });
 
-  pubsub.publish(`comments in post ${deletedComment.post}`, {
-    comments: commentsInPost,
-  });
+    const commentsInPost = await prisma.comment.findMany({
+      where: {
+        postId: deletedComment.postId,
+      },
+    });
 
-  return deletedComment;
+    pubsub.publish(`comments in post ${deletedComment.postId}`, {
+      comments: commentsInPost,
+    });
+
+    return deletedComment;
+  } catch (error) {
+    throw error;
+  }
 };
 
-export default deleteComment;
+export default main;

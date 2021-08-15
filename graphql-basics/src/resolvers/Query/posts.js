@@ -1,14 +1,32 @@
-const posts = (parent, { query }, { db: { posts } }, info) =>
-  query
-    ? posts.filter(({ title, body }) => {
-        const loweredQuery = query.toLowerCase();
-        const isMatchedWithEachOther = (column, value) =>
-          column.toLowerCase().includes(value);
-        return (
-          isMatchedWithEachOther(title, loweredQuery) ||
-          isMatchedWithEachOther(body, loweredQuery)
-        );
-      })
-    : posts;
+import prisma from "../../prisma";
 
-export default posts;
+const main = async (parent, { query }, ctx, info) => {
+  try {
+    const findManyCondition = query
+      ? {
+          where: {
+            OR: [
+              {
+                title: {
+                  contains: query,
+                },
+              },
+              {
+                body: {
+                  contains: query,
+                },
+              },
+            ],
+          },
+        }
+      : null;
+
+    const posts = await prisma.post.findMany(findManyCondition);
+
+    return posts;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export default main;

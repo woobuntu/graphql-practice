@@ -1,28 +1,48 @@
-const updatePost = (
+import prisma from "../../../prisma";
+
+const main = async (
   parent,
   { id: idOfPostToBeUpdated, data },
-  { db: { posts }, pubsub },
+  { pubsub },
   info
 ) => {
-  const { title, body, published } = data;
+  try {
+    const { title, body, published } = data;
 
-  const postToBeUpdated = posts.find(({ id }) => id == idOfPostToBeUpdated);
+    const postToBeUpdated = await prisma.post.findUnique({
+      where: {
+        id: idOfPostToBeUpdated,
+      },
+    });
 
-  const previousPublished = postToBeUpdated.published;
+    if (!postToBeUpdated)
+      throw new Error(
+        `id가 ${idOfPostToBeUpdated}인 post는 존재하지 않습니다.`
+      );
 
-  if (!postToBeUpdated)
-    throw new Error(`id가 ${idOfPostToBeUpdated}인 post는 존재하지 않습니다.`);
+    const previousPublished = postToBeUpdated.published;
 
-  if (typeof title == "string") postToBeUpdated.title = title;
+    const dataToBeUpdated = {};
+    if (typeof title == "string") dataToBeUpdated.title = title;
+    if (typeof body == "string") dataToBeUpdated.body = body;
+    if (typeof published == "boolean") dataToBeUpdated.published = published;
 
-  if (typeof body == "string") postToBeUpdated.body = body;
+    const updatedPost = await prisma.post.update({
+      where: {
+        id: idOfPostToBeUpdated,
+      },
+      data: dataToBeUpdated,
+    });
 
-  if (typeof published == "boolean") postToBeUpdated.published = published;
+    const allPosts = await prisma.post.findMany();
+    // 이전이든 이번이든 한 번이라도 게시되었으면 수정 상태를 반영해야 한다.
+    if (previousPublished || published)
+      pubsub.publish("posts", { posts: allPosts });
 
-  // 이전이든 이번이든 한 번이라도 게시되었으면 수정 상태를 반영해야 한다.
-  if (previousPublished || published) pubsub.publish("posts", { posts });
-
-  return postToBeUpdated;
+    return updatedPost;
+  } catch (error) {
+    throw error;
+  }
 };
 
-export default updatePost;
+export default main;

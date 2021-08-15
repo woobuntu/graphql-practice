@@ -1,23 +1,30 @@
-const deletePost = (
-  parent,
-  args,
-  { db: { posts, comments }, pubsub },
-  info
-) => {
-  // post 있는지 확인
-  const indexOfPostToBeDeleted = posts.findIndex(({ id }) => id == args.id);
-  // 없으면 에러 반환
-  if (indexOfPostToBeDeleted == -1)
-    throw new Error(`id ${args.id}의 post가 존재하지 않습니다.`);
-  // 있으면 관련 커멘트 지우기
-  comments = comments.filter(({ post }) => post !== args.id);
-  // post 지우기
-  const [deletedPost] = posts.splice(indexOfPostToBeDeleted, 1);
+import prisma from "../../../prisma";
 
-  // 게시되지 않은 post의 삭제까지 publish할 필요는 없음
-  deletePost.published && pubsub.publish("posts", { posts });
+const main = async (parent, args, { pubsub }, info) => {
+  try {
+    const postToBeDeleted = await prisma.post.findUnique({
+      where: {
+        id: args.id,
+      },
+    });
 
-  return deletedPost;
+    if (!postToBeDeleted)
+      throw new Error(`id ${args.id}의 post가 존재하지 않습니다.`);
+
+    const deletedPost = await prisma.post.delete({
+      where: {
+        id: args.id,
+      },
+    });
+
+    const allPosts = await prisma.post.findMany();
+    // 게시되지 않은 post의 삭제까지 publish할 필요는 없음
+    deletedPost.published && pubsub.publish("posts", { posts: allPosts });
+
+    return deletedPost;
+  } catch (error) {
+    throw error;
+  }
 };
 
-export default deletePost;
+export default main;

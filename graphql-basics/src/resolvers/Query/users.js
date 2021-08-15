@@ -1,8 +1,23 @@
-const users = (parent, { query }, { db: { users } }, info) =>
-  query
-    ? users.filter(({ name }) =>
-        name.toLowerCase().includes(query.toLowerCase())
-      )
-    : users;
+import prisma from "../../prisma";
 
-export default users;
+const main = async (parent, { query }, ctx, info) => {
+  try {
+    const findManyCondition = query
+      ? {
+          where: {
+            name: {
+              contains: query,
+            },
+          },
+        }
+      : null;
+
+    const users = await prisma.user.findMany(findManyCondition);
+
+    return users;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export default main;

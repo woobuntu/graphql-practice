@@ -1,9 +1,22 @@
-const comments = (parent, { query }, { db: { comments } }, info) =>
-  query
-    ? comments.filter(({ text }) => {
-        const loweredQuery = query.toLowerCase();
-        return text.toLowerCase().includes(loweredQuery);
-      })
-    : comments;
+import prisma from "../../prisma";
 
-export default comments;
+const main = async (parent, { query }, ctx, info) => {
+  try {
+    const findManyCondition = query
+      ? {
+          where: {
+            text: {
+              contains: query,
+            },
+          },
+        }
+      : null;
+
+    const comments = await prisma.comment.findMany(findManyCondition);
+    return comments;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export default main;

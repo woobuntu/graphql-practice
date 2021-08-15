@@ -1,22 +1,49 @@
-const deleteUser = (parent, args, { db: { users, posts, comments } }, info) => {
-  const userIndex = users.findIndex(({ id }) => id === args.id);
+import prisma from "../../../prisma";
 
-  if (userIndex == -1)
-    throw new Error(`${args.id}의 사용자는 존재하지 않습니다.`);
+const main = async (parent, args, { pubsub }, info) => {
+  try {
+    const userToBeDeleted = await prisma.user.findUnique({
+      where: {
+        id: args.id,
+      },
+    });
 
-  const deletedUser = users[userIndex];
+    if (!userToBeDeleted)
+      throw new Error(`${args.id}의 사용자는 존재하지 않습니다.`);
 
-  users = users.filter(({ id }) => id !== args.id);
-  posts = posts.filter(({ id, author }) => {
-    const match = author == args.id;
+    const deletedUser = await prisma.user.delete({
+      where: {
+        id: args.id,
+      },
+      include: {
+        posts: true,
+        comments: true,
+      },
+    });
 
-    if (match) comments = comments.filter(({ post }) => post !== id);
+    // user를 삭제할 때 관련 post와 comment도 삭제되므로
+    // 전체 post 목록 publish와
+    if (deletedUser.posts.length)
+      pubsub.publish("posts", {
+        posts: await prisma.post.findMany(),
+      });
 
-    return !match;
-  });
-  comments = comments.filter(({ author }) => author !== args.id);
+    // 유저가 작성한 댓글의 post를 publish해주는 기능 필요
+    if (deletedUser.comments.length)
+      deletedUser.comments.forEach(async ({ postId }) =>
+        pubsub.publish(`comments in post ${postId}`, {
+          comments: await prisma.comment.findMany({
+            where: {
+              postId: postId,
+            },
+          }),
+        })
+      );
 
-  return deletedUser;
+    return deletedUser;
+  } catch (error) {
+    throw error;
+  }
 };
 
-export default deleteUser;
+export default main;

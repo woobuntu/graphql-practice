@@ -1,26 +1,21 @@
-import { v4 } from "uuid";
+import prisma from "../../../prisma";
 
-const createPost = (
-  parent,
-  { post },
-  { db: { users, posts }, pubsub },
-  info
-) => {
-  const userExists = users.some(({ id }) => id == post.author);
+const main = async (parent, { post }, { pubsub }, info) => {
+  try {
+    const createdPost = await prisma.post.create({
+      data: post,
+    });
 
-  if (!userExists) throw new Error("존재하지 않는 사용자입니다.");
+    const allPosts = await prisma.post.findMany();
 
-  const newPost = {
-    id: v4(),
-    ...post,
-  };
+    pubsub.publish("posts", {
+      posts: allPosts,
+    });
 
-  posts.push(newPost);
-
-  // 게시되지 않은 post의 생성까지 publish할 필요는 없음
-  newPost.publish && pubsub.publish("posts", { posts });
-
-  return newPost;
+    return createdPost;
+  } catch (error) {
+    throw error;
+  }
 };
 
-export default createPost;
+export default main;

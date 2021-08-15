@@ -1,18 +1,23 @@
-import { v4 } from "uuid";
+import prisma from "../../../prisma";
 
-const createUser = (parent, { user }, { db: { users } }, info) => {
-  const emailTaken = users.some(({ email }) => email == user.email);
+const main = async (parent, { user }, ctx, info) => {
+  try {
+    const emailList = await prisma.user.findMany({
+      select: {
+        email: true,
+      },
+    });
 
-  if (emailTaken) throw new Error("Email taken.");
+    const emailTaken = emailList.includes(user.email);
 
-  const newUser = {
-    id: v4(),
-    ...user,
-  };
+    if (emailTaken) throw new Error("Email taken.");
 
-  users.push(newUser);
-
-  return newUser;
+    return await prisma.user.create({
+      data: user,
+    });
+  } catch (error) {
+    throw error;
+  }
 };
 
-export default createUser;
+export default main;

@@ -1,25 +1,23 @@
 type Query {
-  me: User!
   users(query: String): [User!]!
-  post: Post!
   posts(query: String): [Post!]!
   comments(query: String): [Comment!]!
 }
 
 type Mutation {
   createUser(user: CreateUserInput!): User!
-  deleteUser(id: ID!): User!
-  updateUser(id: ID!, data: UpdateUserInput!): User!
+  deleteUser(id: Int!): User!
+  updateUser(id: Int!, data: UpdateUserInput!): User!
   createPost(post: CreatePostInput!): Post!
-  deletePost(id: ID!): Post!
-  updatePost(id: ID!, data: UpdatePostInput!): Post!
+  deletePost(id: Int!): Post!
+  updatePost(id: Int!, data: UpdatePostInput!): Post!
   createComment(comment: CreateCommentInput!): Comment!
-  deleteComment(id: ID!): Comment!
-  updateComment(id: ID!, data: UpdateCommentInput!): Comment!
+  deleteComment(id: Int!): Comment!
+  updateComment(id: Int!, data: UpdateCommentInput!): Comment!
 }
 
 type Subscription {
-  comments(postId: ID!): [Comment!]!
+  comments(postId: Int!): [Comment!]!
   posts: [Post!]!
 }
 # 이렇게 배열로 받지 않고 개별 데이터와 데이터 메소드(CRUD)를 명시해서 최적화하는 방법도 있겠지만,
@@ -42,7 +40,7 @@ input CreatePostInput {
   title: String!
   body: String!
   published: Boolean!
-  author: ID!
+  authorId: Int!
 }
 
 input UpdatePostInput {
@@ -53,8 +51,8 @@ input UpdatePostInput {
 
 input CreateCommentInput {
   text: String!
-  author: ID!
-  post: ID!
+  authorId: Int!
+  postId: Int!
 }
 
 input UpdateCommentInput {
@@ -62,7 +60,7 @@ input UpdateCommentInput {
 }
 
 type User {
-  id: ID!
+  id: Int!
   name: String!
   email: String!
   age: Int
@@ -71,7 +69,7 @@ type User {
 }
 
 type Post {
-  id: ID!
+  id: Int!
   title: String!
   body: String!
   published: Boolean!
@@ -80,7 +78,7 @@ type Post {
 }
 
 type Comment {
-  id: ID!
+  id: Int!
   text: String!
   author: User!
   post: Post!

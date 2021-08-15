@@ -1,36 +1,44 @@
-import { v4 } from "uuid";
+import prisma from "../../../prisma";
 
-const createComment = (
-  parent,
-  { comment },
-  { db: { users, posts, comments }, pubsub },
-  info
-) => {
-  const userExists = users.some(({ id }) => id == comment.author);
+const main = async (parent, { comment }, { pubsub }, info) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: {
+        id: comment.authorId,
+      },
+    });
 
-  if (!userExists) throw new Error("존재하지 않는 사용자입니다.");
+    if (!user)
+      throw new Error(`id ${comment.authorId}의 user는 존재하지 않습니다.`);
 
-  const postExistsAndPublished = posts.some(
-    ({ id, published }) => id == comment.post && published
-  );
+    const post = await prisma.post.findUnique({
+      where: {
+        id: comment.postId,
+      },
+      include: {
+        comments: true,
+      },
+    });
 
-  if (!postExistsAndPublished)
-    throw new Error("post가 존재하지 않거나 게시되지 않은 post입니다.");
+    if (!post)
+      throw new Error(`id ${comment.postId}의 post는 존재하지 않습니다.`);
 
-  const newComment = {
-    id: v4(),
-    ...comment,
-  };
+    if (!post.published)
+      throw new Error("해당 게시물은 아직 게시되지 않았습니다.");
 
-  comments.push(newComment);
+    pubsub.publish(`comments in post ${comment.postId}`, {
+      comments: post.comments,
+    });
 
-  const commentsInPost = comments.filter(({ post }) => post == comment.post);
-
-  pubsub.publish(`comments in post ${comment.post}`, {
-    comment: commentsInPost,
-  });
-
-  return newComment;
+    return await prisma.comment.create({
+      data: {
+        ...comment,
+        authorId: comment.authorId,
+      },
+    });
+  } catch (error) {
+    throw error;
+  }
 };
 
-export default createComment;
+export default main;
